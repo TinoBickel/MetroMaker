@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\..\References\_Sample.png" Link="_Sample.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="MahApps.Metro.IconPacks.BootstrapIcons" Version="6.2.1" />
     <PackageReference Include="MahApps.Metro.IconPacks.FontAwesome6" Version="6.2.1" />
