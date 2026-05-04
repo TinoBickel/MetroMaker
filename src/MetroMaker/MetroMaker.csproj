@@ -10,6 +10,12 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="MahApps.Metro.IconPacks.BootstrapIcons" Version="6.2.1" />
+    <PackageReference Include="MahApps.Metro.IconPacks.FontAwesome6" Version="6.2.1" />
+    <PackageReference Include="MahApps.Metro.IconPacks.Lucide" Version="6.2.1" />
+    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="6.2.1" />
+    <PackageReference Include="MahApps.Metro.IconPacks.PhosphorIcons" Version="6.2.1" />
+    <PackageReference Include="MahApps.Metro.IconPacks.RemixIcon" Version="6.2.1" />
     <PackageReference Include="Material.Icons" Version="3.0.2" />
     <PackageReference Include="Material.Icons.WPF" Version="3.0.2" />
   </ItemGroup>

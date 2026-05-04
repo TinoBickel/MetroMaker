@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Material.Icons;
+using MetroMaker.Models;
 using MetroMaker.Services;
 
 namespace MetroMaker.ViewModels;
@@ -20,7 +20,7 @@ public partial class MainViewModel : ObservableObject
     private string _searchQuery = string.Empty;
 
     [ObservableProperty]
-    private MaterialIconKind? _selectedIcon;
+    private IconEntry? _selectedIcon;
 
     [ObservableProperty]
     private string _exportFilename = string.Empty;
@@ -37,7 +37,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _resultCount;
 
-    public ObservableCollection<MaterialIconKind> FilteredIcons { get; } = [];
+    [ObservableProperty]
+    private int _totalCount;
+
+    public ObservableCollection<IconEntry> FilteredIcons { get; } = [];
 
     public MainViewModel()
     {
@@ -52,6 +55,7 @@ public partial class MainViewModel : ObservableObject
             PerformSearch();
         };
 
+        TotalCount = _searchService.TotalCount;
         PerformSearch();
     }
 
@@ -61,14 +65,14 @@ public partial class MainViewModel : ObservableObject
         _debounceTimer.Start();
     }
 
-    partial void OnSelectedIconChanged(MaterialIconKind? value)
+    partial void OnSelectedIconChanged(IconEntry? value)
     {
-        if (value.HasValue)
+        if (value != null)
         {
-            PreviewImage = _exportService.RenderPreview(value.Value, 128);
-            ActualSizePreview = _exportService.RenderPreview(value.Value, 24);
+            PreviewImage = _exportService.RenderPreview(value, 128);
+            ActualSizePreview = _exportService.RenderPreview(value, 24);
             if (string.IsNullOrEmpty(ExportFilename))
-                ExportFilename = value.Value.ToString();
+                ExportFilename = value.Name;
         }
         else
         {
@@ -88,7 +92,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Export()
     {
-        if (!SelectedIcon.HasValue)
+        if (SelectedIcon == null)
         {
             StatusMessage = "Bitte zuerst ein Icon auswählen.";
             return;
@@ -102,7 +106,7 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            var path = _exportService.Export(SelectedIcon.Value, ExportFilename, _outputDir);
+            var path = _exportService.Export(SelectedIcon, ExportFilename, _outputDir);
             StatusMessage = $"Exportiert: {Path.GetFileName(path)}";
         }
         catch (Exception ex)
@@ -115,7 +119,7 @@ public partial class MainViewModel : ObservableObject
     {
         var results = _searchService.Search(SearchQuery);
         FilteredIcons.Clear();
-        var maxDisplay = string.IsNullOrWhiteSpace(SearchQuery) ? 500 : results.Count;
+        var maxDisplay = string.IsNullOrWhiteSpace(SearchQuery) ? 500 : Math.Min(results.Count, 1000);
         foreach (var icon in results.Take(maxDisplay))
             FilteredIcons.Add(icon);
         ResultCount = results.Count;

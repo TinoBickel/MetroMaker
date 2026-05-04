@@ -11,7 +11,7 @@
         <vm:MainViewModel/>
     </Window.DataContext>
     <Window.Resources>
-        <converters:IconKindToGeometryConverter x:Key="IconToGeometry"/>
+        <converters:IconEntryToGeometryConverter x:Key="IconToGeometry"/>
     </Window.Resources>
 
     <Grid Margin="12">
@@ -58,7 +58,7 @@
 
         <!-- Result Count -->
         <TextBlock Grid.Row="1" Margin="0,6,0,6" Foreground="Gray">
-            <Run Text="Gefunden: "/><Run Text="{Binding ResultCount, Mode=OneWay}"/><Run Text=" Icons"/>
+            <Run Text="Gefunden: "/><Run Text="{Binding ResultCount, Mode=OneWay}"/><Run Text=" von "/><Run Text="{Binding TotalCount, Mode=OneWay}"/><Run Text=" Icons"/>
         </TextBlock>
 
         <!-- Main Content -->
@@ -83,19 +83,23 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="56" Height="68" Margin="2" Padding="4"
-                                ToolTip="{Binding}">
+                        <Border Width="60" Height="72" Margin="2" Padding="4"
+                                ToolTip="{Binding Name}">
                             <StackPanel HorizontalAlignment="Center">
                                 <Viewbox Width="36" Height="36">
                                     <Path Data="{Binding Converter={StaticResource IconToGeometry}}"
-                                          Stroke="#333333" StrokeThickness="0.8"
-                                          Fill="Transparent"
+                                          Fill="#333333"
                                           Stretch="Uniform" Width="24" Height="24"/>
                                 </Viewbox>
-                                <TextBlock Text="{Binding}" FontSize="8"
+                                <TextBlock Text="{Binding Name}" FontSize="7.5"
                                            HorizontalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
-                                           MaxWidth="52" Margin="0,2,0,0"/>
+                                           MaxWidth="56" Margin="0,2,0,0"/>
+                                <TextBlock Text="{Binding Pack}" FontSize="6.5"
+                                           HorizontalAlignment="Center"
+                                           Foreground="#999"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxWidth="56"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
@@ -109,19 +113,21 @@
 
                     <!-- Large Preview -->
                     <Border Width="128" Height="128" HorizontalAlignment="Center"
-                            Background="#F8F8F8" BorderThickness="1" BorderBrush="#EEE">
+                            Background="#505050" BorderThickness="1" BorderBrush="#444">
                         <Image Source="{Binding PreviewImage}" RenderOptions.BitmapScalingMode="HighQuality"
                                Stretch="None"/>
                     </Border>
 
                     <!-- Icon Name -->
-                    <TextBlock Text="{Binding SelectedIcon}" HorizontalAlignment="Center"
-                               Margin="0,8,0,12" FontSize="11" Foreground="#666"/>
+                    <TextBlock Text="{Binding SelectedIcon.Name}" HorizontalAlignment="Center"
+                               Margin="0,8,0,2" FontSize="11" Foreground="#333"/>
+                    <TextBlock Text="{Binding SelectedIcon.Pack}" HorizontalAlignment="Center"
+                               Margin="0,0,0,12" FontSize="10" Foreground="#999"/>
 
                     <!-- Actual Size Preview -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
                         <TextBlock Text="24x24:" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Margin="0,0,6,0"/>
-                        <Border Width="24" Height="24" Background="#F0F0F0" BorderThickness="1" BorderBrush="#DDD">
+                        <Border Width="24" Height="24" Background="#505050" BorderThickness="1" BorderBrush="#444">
                             <Image Source="{Binding ActualSizePreview}" RenderOptions.BitmapScalingMode="NearestNeighbor"
                                    Stretch="None"/>
                         </Border>
