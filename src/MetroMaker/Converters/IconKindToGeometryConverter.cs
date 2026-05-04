@@ -1,18 +1,24 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using Material.Icons;
+using MetroMaker.Models;
 
 namespace MetroMaker.Converters;
 
-public class IconKindToGeometryConverter : IValueConverter
+public class IconEntryToGeometryConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is MaterialIconKind kind)
+        if (value is IconEntry entry && !string.IsNullOrEmpty(entry.PathData))
         {
-            var data = MaterialIconDataProvider.GetData(kind);
-            return Geometry.Parse(data);
+            try
+            {
+                return Geometry.Parse(entry.PathData);
+            }
+            catch
+            {
+                return null;
+            }
         }
         return null;
     }

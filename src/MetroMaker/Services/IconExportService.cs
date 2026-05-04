@@ -2,14 +2,13 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Material.Icons;
+using MetroMaker.Models;
 
 namespace MetroMaker.Services;
 
 public class IconExportService
 {
     private const int OutputSize = 24;
-    private const double StrokeThickness = 1.0;
     private const double SymbolSize = 15.0;
     private static readonly Color IconColor = Color.FromRgb(0xFF, 0xFF, 0xFF);
 
@@ -26,7 +25,7 @@ public class IconExportService
         _circleTemplate.Freeze();
     }
 
-    public DrawingImage RenderPreview(MaterialIconKind iconKind, double renderSize)
+    public DrawingImage RenderPreview(IconEntry icon, double renderSize)
     {
         var drawingGroup = new DrawingGroup();
         var scale = renderSize / OutputSize;
@@ -37,14 +36,14 @@ public class IconExportService
             context.DrawImage(_circleTemplate, imageRect);
 
             var center = new Point(renderSize / 2, renderSize / 2);
-            DrawIconSymbol(context, iconKind, center, SymbolSize * scale, scale);
+            DrawIconSymbol(context, icon.PathData, center, SymbolSize * scale);
         }
 
         drawingGroup.Freeze();
         return new DrawingImage(drawingGroup);
     }
 
-    public string Export(MaterialIconKind iconKind, string filename, string outputDir)
+    public string Export(IconEntry icon, string filename, string outputDir)
     {
         Directory.CreateDirectory(outputDir);
 
@@ -55,7 +54,7 @@ public class IconExportService
             context.DrawImage(_circleTemplate, imageRect);
 
             var center = new Point(OutputSize / 2.0, OutputSize / 2.0);
-            DrawIconSymbol(context, iconKind, center, SymbolSize, 1.0);
+            DrawIconSymbol(context, icon.PathData, center, SymbolSize);
         }
 
         var renderBitmap = new RenderTargetBitmap(OutputSize, OutputSize, 96, 96, PixelFormats.Pbgra32);
@@ -73,9 +72,8 @@ public class IconExportService
         return filePath;
     }
 
-    private static void DrawIconSymbol(DrawingContext context, MaterialIconKind kind, Point center, double targetSize, double scale)
+    private static void DrawIconSymbol(DrawingContext context, string pathData, Point center, double targetSize)
     {
-        var pathData = MaterialIconDataProvider.GetData(kind);
         var geometry = Geometry.Parse(pathData);
         var bounds = geometry.Bounds;
 
