@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.Json;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using MetroMaker.Models;
 using MetroMaker.Services;
 
@@ -14,16 +16,13 @@ public partial class MainViewModel : ObservableObject
     private readonly IconSearchService _searchService;
     private readonly IconExportService _exportService;
     private readonly DispatcherTimer _debounceTimer;
-    private readonly string _outputDir;
+    private readonly string _settingsPath;
 
     [ObservableProperty]
     private string _searchQuery = string.Empty;
 
     [ObservableProperty]
     private IconEntry? _selectedIcon;
-
-    [ObservableProperty]
-    private string _exportFilename = string.Empty;
 
     [ObservableProperty]
     private ImageSource? _previewImage;
@@ -49,7 +48,7 @@ public partial class MainViewModel : ObservableObject
     {
         _searchService = new IconSearchService();
         _exportService = new IconExportService();
-        _outputDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..", "Output"));
+        _settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
         _debounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
         _debounceTimer.Tick += (_, _) =>
@@ -71,8 +70,6 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedIconChanged(IconEntry? value)
     {
         UpdatePreview();
-        if (value != null && string.IsNullOrEmpty(ExportFilename))
-            ExportFilename = value.Name;
     }
 
     partial void OnStrokeWeightChanged(double value)
@@ -111,21 +108,56 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(ExportFilename))
+        var dialog = new SaveFileDialog
         {
-            StatusMessage = "Bitte einen Dateinamen eingeben.";
+            Filter = "PNG Dateien (*.png)|*.png",
+            FileName = SelectedIcon.Name,
+            DefaultExt = ".png"
+        };
+
+        var lastPath = LoadLastExportPath();
+        if (!string.IsNullOrEmpty(lastPath) && Directory.Exists(lastPath))
+            dialog.InitialDirectory = lastPath;
+
+        if (dialog.ShowDialog() != true)
             return;
-        }
 
         try
         {
-            var path = _exportService.Export(SelectedIcon, ExportFilename, _outputDir, StrokeWeight);
-            StatusMessage = $"Exportiert: {Path.GetFileName(path)}";
+            _exportService.Export(SelectedIcon, dialog.FileName, StrokeWeight);
+            SaveLastExportPath(Path.GetDirectoryName(dialog.FileName)!);
+            StatusMessage = $"Exportiert: {dialog.FileName}";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Fehler: {ex.Message}";
         }
+    }
+
+    private string? LoadLastExportPath()
+    {
+        try
+        {
+            if (File.Exists(_settingsPath))
+            {
+                var json = File.ReadAllText(_settingsPath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                return settings?.LastExportPath;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private void SaveLastExportPath(string path)
+    {
+        try
+        {
+            var settings = new AppSettings { LastExportPath = path };
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_settingsPath, json);
+        }
+        catch { }
     }
 
     private void PerformSearch()
@@ -136,5 +168,10 @@ public partial class MainViewModel : ObservableObject
         foreach (var icon in results.Take(maxDisplay))
             FilteredIcons.Add(icon);
         ResultCount = results.Count;
+    }
+
+    private class AppSettings
+    {
+        public string? LastExportPath { get; set; }
     }
 }

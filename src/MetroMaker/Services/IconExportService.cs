@@ -43,9 +43,11 @@ public class IconExportService
         return new DrawingImage(drawingGroup);
     }
 
-    public string Export(IconEntry icon, string filename, string outputDir, double strokeWeight = 0.4)
+    public void Export(IconEntry icon, string filePath, double strokeWeight = 0.4)
     {
-        Directory.CreateDirectory(outputDir);
+        var dir = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
 
         var drawingVisual = new DrawingVisual();
         using (var context = drawingVisual.RenderOpen())
@@ -63,13 +65,8 @@ public class IconExportService
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
 
-        var sanitizedFilename = SanitizeFilename(filename);
-        var filePath = Path.Combine(outputDir, $"{sanitizedFilename}.png");
-
         using var stream = File.Create(filePath);
         encoder.Save(stream);
-
-        return filePath;
     }
 
     private static void DrawIconSymbol(DrawingContext context, string pathData, Point center, double targetSize, double strokeWeight)
@@ -103,12 +100,5 @@ public class IconExportService
         context.PushTransform(transform);
         context.DrawGeometry(brush, pen, geometry);
         context.Pop();
-    }
-
-
-    private static string SanitizeFilename(string filename)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        return string.Concat(filename.Select(c => invalid.Contains(c) ? '_' : c));
     }
 }
