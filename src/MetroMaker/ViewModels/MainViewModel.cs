@@ -40,6 +40,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _totalCount;
 
+    [ObservableProperty]
+    private double _strokeWeight = 0.4;
+
     public ObservableCollection<IconEntry> FilteredIcons { get; } = [];
 
     public MainViewModel()
@@ -67,12 +70,22 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedIconChanged(IconEntry? value)
     {
-        if (value != null)
+        UpdatePreview();
+        if (value != null && string.IsNullOrEmpty(ExportFilename))
+            ExportFilename = value.Name;
+    }
+
+    partial void OnStrokeWeightChanged(double value)
+    {
+        UpdatePreview();
+    }
+
+    private void UpdatePreview()
+    {
+        if (SelectedIcon != null)
         {
-            PreviewImage = _exportService.RenderPreview(value, 128);
-            ActualSizePreview = _exportService.RenderPreview(value, 24);
-            if (string.IsNullOrEmpty(ExportFilename))
-                ExportFilename = value.Name;
+            PreviewImage = _exportService.RenderPreview(SelectedIcon, 128, StrokeWeight);
+            ActualSizePreview = _exportService.RenderPreview(SelectedIcon, 24, StrokeWeight);
         }
         else
         {
@@ -106,7 +119,7 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            var path = _exportService.Export(SelectedIcon, ExportFilename, _outputDir);
+            var path = _exportService.Export(SelectedIcon, ExportFilename, _outputDir, StrokeWeight);
             StatusMessage = $"Exportiert: {Path.GetFileName(path)}";
         }
         catch (Exception ex)

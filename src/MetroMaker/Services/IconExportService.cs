@@ -16,7 +16,7 @@ public class IconExportService
 
     public IconExportService()
     {
-        var templatePath = FindTemplatePath();
+        var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_Sample.png");
         _circleTemplate = new BitmapImage();
         _circleTemplate.BeginInit();
         _circleTemplate.UriSource = new Uri(templatePath, UriKind.Absolute);
@@ -25,7 +25,7 @@ public class IconExportService
         _circleTemplate.Freeze();
     }
 
-    public DrawingImage RenderPreview(IconEntry icon, double renderSize)
+    public DrawingImage RenderPreview(IconEntry icon, double renderSize, double strokeWeight = 0.4)
     {
         var drawingGroup = new DrawingGroup();
         var scale = renderSize / OutputSize;
@@ -36,14 +36,14 @@ public class IconExportService
             context.DrawImage(_circleTemplate, imageRect);
 
             var center = new Point(renderSize / 2, renderSize / 2);
-            DrawIconSymbol(context, icon.PathData, center, SymbolSize * scale);
+            DrawIconSymbol(context, icon.PathData, center, SymbolSize * scale, strokeWeight);
         }
 
         drawingGroup.Freeze();
         return new DrawingImage(drawingGroup);
     }
 
-    public string Export(IconEntry icon, string filename, string outputDir)
+    public string Export(IconEntry icon, string filename, string outputDir, double strokeWeight = 0.4)
     {
         Directory.CreateDirectory(outputDir);
 
@@ -54,7 +54,7 @@ public class IconExportService
             context.DrawImage(_circleTemplate, imageRect);
 
             var center = new Point(OutputSize / 2.0, OutputSize / 2.0);
-            DrawIconSymbol(context, icon.PathData, center, SymbolSize);
+            DrawIconSymbol(context, icon.PathData, center, SymbolSize, strokeWeight);
         }
 
         var renderBitmap = new RenderTargetBitmap(OutputSize, OutputSize, 96, 96, PixelFormats.Pbgra32);
@@ -72,7 +72,7 @@ public class IconExportService
         return filePath;
     }
 
-    private static void DrawIconSymbol(DrawingContext context, string pathData, Point center, double targetSize)
+    private static void DrawIconSymbol(DrawingContext context, string pathData, Point center, double targetSize, double strokeWeight)
     {
         var geometry = Geometry.Parse(pathData);
         var bounds = geometry.Bounds;
@@ -93,30 +93,18 @@ public class IconExportService
         var brush = new SolidColorBrush(IconColor);
         brush.Freeze();
 
+        Pen? pen = null;
+        if (strokeWeight > 0)
+        {
+            pen = new Pen(brush, strokeWeight / iconScale) { LineJoin = PenLineJoin.Round };
+            pen.Freeze();
+        }
+
         context.PushTransform(transform);
-        context.DrawGeometry(brush, null, geometry);
+        context.DrawGeometry(brush, pen, geometry);
         context.Pop();
     }
 
-    private static string FindTemplatePath()
-    {
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        var searchPaths = new[]
-        {
-            Path.Combine(baseDir, "..", "..", "..", "..", "..", "References", "_Sample.png"),
-            Path.Combine(baseDir, "References", "_Sample.png"),
-            Path.Combine(baseDir, "_Sample.png"),
-        };
-
-        foreach (var path in searchPaths)
-        {
-            var fullPath = Path.GetFullPath(path);
-            if (File.Exists(fullPath))
-                return fullPath;
-        }
-
-        throw new FileNotFoundException("Circle template '_Sample.png' not found in References folder.");
-    }
 
     private static string SanitizeFilename(string filename)
     {
